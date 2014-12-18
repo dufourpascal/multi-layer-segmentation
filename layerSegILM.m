@@ -1,4 +1,4 @@
-function [ binaryMask, surfaceILMFine ] = layerSegILM( surfaceILMCoarse, volumeProb, volumeEdgeCost )
+function [ binaryMask, surfaceILMFine ] = layerSegILM( surfaceILMCoarse, volumeProb, volumeEdgeCost, confidence )
 %layerSegILM Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -13,7 +13,7 @@ edgeDz = 16;
 
 %% sub volume
 rangeAbove = 20;
-rangeBelow = 20;
+rangeBelow = 60;
 % maxRangeY = rangeAbove+rangeBelow+1;
 % topVolInd = zeros(sz,sx);
 % bottomVolInd = zeros(sz,sx);
@@ -31,10 +31,16 @@ intraColEdges = computeIntraColEdges( volumeEdgeCost, topIds, bottomIds, topSurf
 %% inter-column edges
 interColEdges = computeInterColEdges(topIds, bottomIds, topSurface, bottomSurface, edgeDx, edgeDz);
 
+%% regularizing edges
+regStrengthX = 2.0;
+regStrengthZ = 0.2;
+regularizingEdges = computeHorizontalConnectivity(regStrengthX, regStrengthZ, topIds, bottomIds, confidence);
+
+
 %% creating graph
 nNodes = size(costs,2);
 
-edges = [intraColEdges; interColEdges];
+edges = [intraColEdges; interColEdges; regularizingEdges];
 nEdges = size(edges, 1);
 
 disp('creating graph');

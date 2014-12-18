@@ -8,8 +8,8 @@ function surfaceILMCoarse = layerSegILMCoarse( volumeProb, volumeEdgeCost )
 % binaryMask = zeros(sz, sy, sx);
 
 % infCost = 10000000;
-edgeDx = 3;
-edgeDz = 16;
+edgeDx = 2;
+edgeDz = 3;
 
 %% set unary cost
 disp('setting unary costs');
@@ -20,10 +20,16 @@ intraColEdges = computeIntraColEdgesInVolume( volumeEdgeCost, topIds, bottomIds 
 %% inter-column edges
 interColEdges = computeInterColEdgesInVolume(topIds, bottomIds, edgeDx, edgeDz);
 
+%% regularizing edges
+regStrengthX = 0.5;
+regStrengthZ = 0.5;
+confidence = ones(sz,sx);
+regularizingEdges = computeHorizontalConnectivity(regStrengthX, regStrengthZ, topIds, bottomIds, confidence);
+
 %% creating graph
 nNodes = size(costs,2);
 
-edges = [intraColEdges; interColEdges];
+edges = [intraColEdges; interColEdges; regularizingEdges];
 nEdges = size(edges, 1);
 
 disp('creating graph');
