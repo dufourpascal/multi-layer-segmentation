@@ -1,9 +1,10 @@
-function [surfaceGCL, surfaceINL, surfaceONL, surfaceRPE] = layerSegRetina( surfaceBM, surfaceILM, volumeProb, volumeEdgeCost )
+function [surfaceGCL, surfaceINL, surfaceONL, surfaceRPE] = layerSegRetina( surfaceBM, ...
+  surfaceILM, volumeProb, errorMap )
 %layerSegILM Summary of this function goes here
 %   Detailed explanation goes here
 
 %% setup
-[sz, sy, sx] = size(volumeEdgeCost);
+[sz, sy, sx, ~] = size(volumeProb);
 
 
 % infCost = 10000000;
@@ -13,22 +14,27 @@ edgeDx2 = 3;
 edgeDz2 = 20;
 edgeDx3 = 4;
 edgeDz3 = 30;
+% edgeDx4 = 5;
+% edgeDz4 = 30;
 edgeDx4 = 5;
 edgeDz4 = 30;
-regularizingStrengthX = 2.0;
-regularizingStrengthZ = 0.2;
+% regularizingStrengthX = 2000.0;
+% regularizingStrengthZ = 200.0;
 
 %% set unary cost
 disp('setting unary costs');
 % size(surfaceILMCoarse)
 % size(volumeProb)
-confidence = ones(sz, sx); % no confidence available
+confidence = errorMap;
+% confidence = ones(sz, sx); % no confidence available
 
 %% compute boundary map strength
 probabilityLabel1 = squeeze(volumeProb(:,:,:,1));
 probabilityLabel2 = squeeze(volumeProb(:,:,:,2)) + probabilityLabel1;
 probabilityLabel3 = squeeze(volumeProb(:,:,:,3)) + probabilityLabel2;
-probabilityLabel4 = squeeze(volumeProb(:,:,:,4)) + probabilityLabel3;
+% probabilityLabel4 = squeeze(volumeProb(:,:,:,4)) + probabilityLabel3;
+probabilityLabel4 = 1.0 - squeeze(volumeProb(:,:,:,5));
+
 
 filterbank = makeLMFilters;
 disp('label1');
@@ -50,50 +56,57 @@ edgeLabelL = squeeze(convolute3dRawVolume(probabilityLabel3, - filterbank(:,:,6)
 edgeLabel3 = min(edgeLabelH, edgeLabelR);
 edgeLabel3 = min(edgeLabel3,  edgeLabelL);
 
+%test
+% edgeLabel2 = edgeLabel2 - edgeLabel3;
+
 edgeLabelH = squeeze(convolute3dRawVolume(probabilityLabel4,   filterbank(:,:,1)));
 edgeLabelR = squeeze(convolute3dRawVolume(probabilityLabel4,   filterbank(:,:,2)));
 edgeLabelL = squeeze(convolute3dRawVolume(probabilityLabel4, - filterbank(:,:,6)));
 edgeLabel4 = min(edgeLabelH, edgeLabelR);
 edgeLabel4 = min(edgeLabel4,  edgeLabelL);
 
+% imgT = [squeeze(edgeLabel2(10,:,1:150)), squeeze(edgeLabel3(10,:,151:300)), squeeze(edgeLabel4(10,:,301:512)) ];
+% imagesc(imgT); colormap('gray');
+% pause;
+
 %% sub volume label 1 (NFL) vs rest
 edgeCostStrength = 500;
-regStrengthX = 10.0;
-regStrengthZ = 1.0;
-[costs1, topIds1, bottomIds1] = computeUnaryTermsInRegion(surfaceILM, surfaceBM, probabilityLabel1);
+regStrengthX = 1.0;
+regStrengthZ = 0.1;
+[costs1, topIds1, bottomIds1, topOffset1] = computeUnaryTermsInRegion(surfaceILM, surfaceBM, probabilityLabel1);
 intraColEdges1 = computeIntraColEdges( edgeCostStrength .* edgeLabel1, topIds1, bottomIds1, surfaceILM );
 interColEdges1 = computeInterColEdges(topIds1, bottomIds1, surfaceILM, surfaceBM, edgeDx1, edgeDz1);
-regularizingEdges1 = computeHorizontalConnectivity(regStrengthX, regStrengthZ, topIds1, bottomIds1, confidence);
+regularizingEdges1 = computeHorizontalConnectivity(regStrengthX, regStrengthZ, topIds1, bottomIds1, topOffset1, confidence);
 
 %% sub volume label 2 (GCL+IPL) vs down layers
-edgeCostStrength = 500;
-regStrengthX = 10.0;
-regStrengthZ = 1.0;
-[costs2, topIds2, bottomIds2] = computeUnaryTermsInRegion(surfaceILM, surfaceBM, probabilityLabel2);
+edgeCostStrength = 500; %500
+regStrengthX = 1.0;
+regStrengthZ = 0.1;
+[costs2, topIds2, bottomIds2, topOffset2] = computeUnaryTermsInRegion(surfaceILM, surfaceBM, probabilityLabel2);
 intraColEdges2 = computeIntraColEdges( edgeCostStrength .* edgeLabel2, topIds2, bottomIds2, surfaceILM );
 interColEdges2 = computeInterColEdges(topIds2, bottomIds2, surfaceILM, surfaceBM, edgeDx2, edgeDz2);
-regularizingEdges2 = computeHorizontalConnectivity(regStrengthX, regStrengthZ, topIds2, bottomIds2, confidence);
+regularizingEdges2 = computeHorizontalConnectivity(regStrengthX, regStrengthZ, topIds2, bottomIds2, topOffset2, confidence);
 
 %% sub volume label 3 (INL+OPL) vs ONL and RPE
 edgeCostStrength = 500;
-regStrengthX = 10.0;
-regStrengthZ = 1.0;
-[costs3, topIds3, bottomIds3] = computeUnaryTermsInRegion(surfaceILM, surfaceBM, probabilityLabel3);
+regStrengthX = 1.0;
+regStrengthZ = 0.1;
+[costs3, topIds3, bottomIds3, topOffset3] = computeUnaryTermsInRegion(surfaceILM, surfaceBM, probabilityLabel3);
 intraColEdges3 = computeIntraColEdges( edgeCostStrength .* edgeLabel3, topIds3, bottomIds3, surfaceILM );
 interColEdges3 = computeInterColEdges(topIds3, bottomIds3, surfaceILM, surfaceBM, edgeDx3, edgeDz3);
-regularizingEdges3 = computeHorizontalConnectivity(regStrengthX, regStrengthZ, topIds3, bottomIds3, confidence);
+regularizingEdges3 = computeHorizontalConnectivity(regStrengthX, regStrengthZ, topIds3, bottomIds3, topOffset3, confidence);
 
 %% sub volume label 4 (ONL) vs RPE
 edgeCostStrength = 500.0;
-rsxRPE = 25.0;
-rszRPE = 2.5;
-[costs4, topIds4, bottomIds4] = computeUnaryTermsInRegion(surfaceILM, surfaceBM, probabilityLabel4);
 
-% intraColEdges4 = computeIntraColEdges( -edgeCostStrength .* volumeEdgeCost, topIds4, bottomIds4, surfaceILM );
+% edgeCostL4 = edgeCostStrength .* edgeLabel4;
+rsxRPE = 1.0;
+rszRPE = 0.1;
+[costs4, topIds4, bottomIds4, topOffset4] = computeUnaryTermsInRegion(surfaceILM, surfaceBM, probabilityLabel4);
+
 intraColEdges4 = computeIntraColEdges( edgeCostStrength .* edgeLabel4, topIds4, bottomIds4, surfaceILM );
-
 interColEdges4 = computeInterColEdges(topIds4, bottomIds4, surfaceILM, surfaceBM, edgeDx4, edgeDz4);
-regularizingEdges4 = computeHorizontalConnectivity(rsxRPE, rszRPE, topIds4, bottomIds4, confidence);
+regularizingEdges4 = computeHorizontalConnectivity(rsxRPE, rszRPE, topIds4, bottomIds4, topOffset4, confidence);
 
 
 %% adjust top Ids

@@ -12,6 +12,8 @@ bottomSurface = zeros(sz,sx);
 topIds = zeros(sz,sx);
 bottomIds = zeros(sz,sx);
 
+topOffset = zeros(sz,sx);
+
 nodeId = 1;
 for z = 1:sz
   for x = 1:sx

@@ -34,7 +34,7 @@ interColEdges = computeInterColEdges(topIds, bottomIds, topSurface, bottomSurfac
 %% regularizing edges
 regStrengthX = 2.0;
 regStrengthZ = 0.2;
-regularizingEdges = computeHorizontalConnectivity(regStrengthX, regStrengthZ, topIds, bottomIds, confidence);
+regularizingEdges = computeHorizontalConnectivity(regStrengthX, regStrengthZ, topIds, bottomIds, topSurface, confidence);
 
 
 %% creating graph

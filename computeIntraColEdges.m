@@ -19,7 +19,7 @@ disp(['intra-col edges BScan ', num2str(z)]);
     nEdges = endId - startId;
     
     eInd = startId;
-    yVol = topSurface(z,x);
+    yVol = round(topSurface(z,x));
     for e = 1 : nEdges
       
       gradientCost = edgeCosts(z,yVol,x);

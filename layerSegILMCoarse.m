@@ -1,4 +1,4 @@
-function surfaceILMCoarse = layerSegILMCoarse( volumeProb, volumeEdgeCost )
+function surfaceILMCoarse = layerSegILMCoarse( volumeProb, volumeEdgeCost, confidence )
 %layerSegILM Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -23,8 +23,8 @@ interColEdges = computeInterColEdgesInVolume(topIds, bottomIds, edgeDx, edgeDz);
 %% regularizing edges
 regStrengthX = 0.5;
 regStrengthZ = 0.5;
-confidence = ones(sz,sx);
-regularizingEdges = computeHorizontalConnectivity(regStrengthX, regStrengthZ, topIds, bottomIds, confidence);
+topOffset = zeros(sz, sx); %the graph is in the regular volume, no offset
+regularizingEdges = computeHorizontalConnectivity(regStrengthX, regStrengthZ, topIds, bottomIds, topOffset, confidence);
 
 %% creating graph
 nNodes = size(costs,2);

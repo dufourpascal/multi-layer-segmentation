@@ -1,4 +1,4 @@
-function [ costs, topIds, bottomIds ] = computeUnaryTermsInRegion( surfaceTop, surfaceBottom, volumeProb)
+function [ costs, topIds, bottomIds, topOffset ] = computeUnaryTermsInRegion( surfaceTop, surfaceBottom, volumeProb)
 %COMPUTEUNARYTERMS Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -7,6 +7,7 @@ infCost = 10000000;
 
 topIds = zeros(sz,sx);
 bottomIds = zeros(sz,sx);
+topOffset = zeros(sz,sx);
 
 nodeId = 1;
 for z = 1:sz
@@ -36,6 +37,7 @@ for z = 1:sz
     
     topIds(z,x) = topNodeId;
     bottomIds(z,x) = bottomNodeId;
+    topOffset(z,x) = startY;
   end
   
 

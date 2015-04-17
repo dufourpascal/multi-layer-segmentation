@@ -1,5 +1,5 @@
 function [ binaryMask, surfaceBMFine ] = layerSegBM( surfaceBMCoarse, ...
-  volumeProb, volumeEdgeCost, confidence )
+  volumeProb, volumeEdgeCost, confidence, regStrength )
 %layerSegILM Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -11,8 +11,8 @@ binaryMask = zeros(sz, sy, sx);
 % infCost = 10000000;
 edgeDx = 1;
 edgeDz = 15;
-regularizingStrengthX = 50.0;
-regularizingStrengthZ = 5.0;
+regularizingStrengthX = 50.0 * regStrength;
+regularizingStrengthZ = 5.0 * regStrength;
 
 %% sub volume
 rangeAbove = 60;
@@ -31,7 +31,7 @@ intraColEdges = computeIntraColEdges( volumeEdgeCost, topIds, bottomIds, topSurf
 interColEdges = computeInterColEdges(topIds, bottomIds, topSurface, bottomSurface, edgeDx, edgeDz);
 
 %% regularizing edges in horizontal direction (assuming regular volue)
-regularizingEdges = computeHorizontalConnectivity(regularizingStrengthX, regularizingStrengthZ, topIds, bottomIds, confidence);
+regularizingEdges = computeHorizontalConnectivity(regularizingStrengthX, regularizingStrengthZ, topIds, bottomIds, topSurface, confidence);
 %% creating graph
 nNodes = size(costs,2);
 
